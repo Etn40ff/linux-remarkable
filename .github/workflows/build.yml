@@ -1,0 +1,40 @@
+on:
+  push:
+  pull_request:
+jobs:
+  build:
+    name: Build package
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Install Apt packages
+        id: cache-apt
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          execute_install_scripts: true
+          packages: libarchive-tools
+          version: 1.0
+      - name: Get package
+        run: |
+          curl -s "$url" -o package
+          sed -i \
+            "s/~VERSION~/~r${sha}.${run_number}-${run_attempt}/" \
+            ./package
+          sed -i \
+            "s|~REPOSITORY~|${repository}|" \
+            ./package
+          sed -i \
+            "s|~SHA~|${sha}|" \
+            ./package
+        env:
+          url: "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/package"
+          sha: ${{ github.sha }}
+          run_number: ${{ github.run_number }}
+          run_attempt: ${{ github.run_attempt }}
+          repository: ${{ github.repository }}
+      - name: Build package
+        uses: toltec-dev/build-action@v1
+      - name: Save packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages
+          path: dist/**/*.ipk

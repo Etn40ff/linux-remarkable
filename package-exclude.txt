@@ -1,0 +1,4 @@
+./package
+./package-exclude.txt
+./.github/
+./src.tar.gz
